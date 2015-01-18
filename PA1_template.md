@@ -1,32 +1,24 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
-```{r echo=FALSE, message=FALSE}
-library(dplyr)
-library(lattice)
-options(scipen=10)
-```
+
 
 
 ## Loading and preprocessing the data
 
-```{r }
+
+```r
 data_raw <- read.table(unz("activity.zip", "activity.csv"), header=T, sep=",")
 data_df <- tbl_df(data_raw)
 data_analysis <-    data_df                                  %>% 
                     mutate(weekday= weekdays(as.Date(date))) %>%
                     group_by(date,weekday)                   %>% 
                     summarise(mean_steps = mean(steps), total_steps=sum(steps), missing=sum(is.na(steps)) )  
-
 ```
 
 ## What is mean total number of steps taken per day?
-```{r}
+
+```r
 histo        <- hist(data_analysis$total_steps, 
                      xlab='Number of steps', 
                      main ='Histogram of total steps per day')
@@ -38,12 +30,14 @@ abline(v=mean,col="red")
 abline(v=median,col="blue")
 text(mean,max(histo$counts), paste("Mean =", mean) )
 text(median,round(mean(histo$counts)), paste("Median =", median) )
-
 ```
+
+![plot of chunk unnamed-chunk-3](./PA1_template_files/figure-html/unnamed-chunk-3.png) 
 
 
 ## What is the average daily activity pattern?
-```{r}
+
+```r
 data_analysis2 <-     data_df                                                               %>% 
                       mutate(weekday=as.POSIXlt(as.Date(date))$wday )                       %>%
                       mutate(weekpattern = ifelse(weekday %in% c(0,6),'weekend','weekday')) %>%
@@ -60,20 +54,38 @@ xyplot( mean_steps~interval,
                  panel.text(xmax,ymax, paste("Interval containing maxvalue:" ,xmax))
                  panel.xyplot(...)         
        })
-
 ```
+
+![plot of chunk unnamed-chunk-4](./PA1_template_files/figure-html/unnamed-chunk-4.png) 
 
 ## Imputing missing values
 
-The number of missing data is : `r sum(is.na(data_df) )` 
+The number of missing data is : 2304 
 
 There are some days fully missing, so the missing data is distributed only across days and not across time intervalls.
-```{r}
+
+```r
 filter(data_analysis, missing>0)
-````
+```
+
+```
+## Source: local data frame [8 x 5]
+## Groups: date
+## 
+##         date    weekday mean_steps total_steps missing
+## 1 2012-10-01     Montag         NA          NA     288
+## 2 2012-10-08     Montag         NA          NA     288
+## 3 2012-11-01 Donnerstag         NA          NA     288
+## 4 2012-11-04    Sonntag         NA          NA     288
+## 5 2012-11-09    Freitag         NA          NA     288
+## 6 2012-11-10    Samstag         NA          NA     288
+## 7 2012-11-14   Mittwoch         NA          NA     288
+## 8 2012-11-30    Freitag         NA          NA     288
+```
 
 In a next step I am replacing the missing days with the respective mean values of these weekdays
-```{r}
+
+```r
 weekday_avg           <-       data_analysis      %>%
                                group_by(weekday)  %>%
                                summarise(avg = mean(total_steps, na.rm=T))
@@ -95,21 +107,22 @@ abline(v=mean_new,col="red")
 abline(v=median_new,col="blue")
 text(mean,max(histo$counts), paste("Mean =", mean_new) )
 text(median,round(mean(histo$counts)), paste("Median =", median_new) )
-
 ```
 
+![plot of chunk unnamed-chunk-6](./PA1_template_files/figure-html/unnamed-chunk-6.png) 
 
-The result shows that compared to the analysis without treating the missing values where the mean was `r mean`  the mean of total steps with imputation of missings with `r mean_new` is `r ifelse(mean_new>mean, "bigger", ifelse(mean_new==mean, "the same","smaller"))`!
 
-The median compared to the analysis without treating the missing values where it was `r median`  with imputation of missings the median becomes `r median_new`  and is `r ifelse(median_new>median, "bigger", ifelse(median_new==median, "the same","smaller"))`!
+The result shows that compared to the analysis without treating the missing values where the mean was 10800  the mean of total steps with imputation of missings with 10800 is the same!
+
+The median compared to the analysis without treating the missing values where it was 10800  with imputation of missings the median becomes 11000  and is bigger!
 
 
 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r}
 
+```r
 data_analysis3 <-     data_df %>% 
   mutate(weekday=as.POSIXlt(as.Date(date))$wday ) %>%
   mutate(weekpattern = ifelse(weekday %in% c(0,6),'weekend','weekday')) %>%
@@ -117,8 +130,9 @@ data_analysis3 <-     data_df %>%
   summarise(mean_steps=mean(steps, na.rm=T), missing=sum(is.na(steps)) )  
 
 xyplot(mean_steps~interval |weekpattern, data_analysis2, type="l", layout=c(1,2))
-
 ```
+
+![plot of chunk unnamed-chunk-7](./PA1_template_files/figure-html/unnamed-chunk-7.png) 
 
 
 
